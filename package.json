@@ -1,0 +1,16 @@
+{
+  "name": "shorturl-service",
+  "version": "1.0.0",
+  "description": "URL Shortener Microservice",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "a-mt",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.0",
+    "mongodb": "^2.2.24"
+  }
+}
