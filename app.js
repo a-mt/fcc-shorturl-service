@@ -1,11 +1,10 @@
-var mongodb  = require('mongodb');
-var ObjectId = mongodb.ObjectID;
-var urlDB    = process.env.MONGOLAB_URI;
+var { MongoClient, ObjectId } = require('mongodb');
+var urlDB   = process.env.MONGOLAB_URI;
 var db;
 
-var fs       = require('fs');
-var express  = require('express');
-var app      = express();
+var fs      = require('fs');
+var express = require('express');
+var app     = express();
 
 app.get('/new/:url*', function(req, res){
     var url  = req.url.substr(5);
@@ -17,7 +16,6 @@ app.get('/new/:url*', function(req, res){
         }));
         return;
     }
-
     var collection = db.collection("url");
     var data       = { original_url: url };
     var short_url  = (req.get('x-forwarded-proto') ? 'https' : 'http') + '://' + req.get('host') + '/';
@@ -29,18 +27,22 @@ app.get('/new/:url*', function(req, res){
     }
 
     // Check if url already as a short version
-    collection.findOne({ url: url }, function(err, doc){
-        if(err) throw err;
+    collection.findOne({ url }).then(function(doc){
         if(doc) {
             respond(doc);
 
         // Create a short version
         } else {
-            collection.insert({ url: url }, function(err, q){
-                if(err) throw err;
+            collection.insertOne({ url }).then(function(q){
                 respond(q.ops[0]);
+            }).catch(err => {
+                console.error(err);
+                respond(err);
             });
         }
+    }).catch(err => {
+        console.error(err);
+        respond(err);
     });
 });
 
@@ -54,10 +56,8 @@ app.get('*', function(req, res){
    }
    var collection = db.collection("url");
    collection.findOne({
-       _id: ObjectId(query)
-   }, function(err, doc){
-       if(err) throw err;
-
+       _id: new ObjectId(query)
+   }).then(function(doc){
        if(doc) {
            res.redirect(doc.url);
        } else {
@@ -65,12 +65,21 @@ app.get('*', function(req, res){
                 error: "Wrong id."
             }));
        }
+   }).catch(err => {
+        console.error(err);
+        res.send(JSON.stringify({
+            error: "Wrong id."
+        }));
    });
 });
 
-mongodb.MongoClient.connect(urlDB, function(err, database){
-    if(err) throw err;
-    db = database;
+const mongoClient = new MongoClient(urlDB);
+
+mongoClient.connect().then(function(){
+    console.log('Successfully connected to mongo')
+
+    db = mongoClient.db('urlshortener');
+
     app.listen(process.env.PORT || 8080, function(){
         console.log('The server is listening on port 8080');
     });
