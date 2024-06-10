@@ -37,3 +37,12 @@ User stories:
   ```
   npm start
   ```
+
+## Deploy on Netlify
+
+``` bash
+netlify init
+netlify env:set MONGOLAB_URI YOUR_URI_HERE
+netlify deploy
+netlify deploy --prod
+```
